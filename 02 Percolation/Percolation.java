@@ -4,21 +4,13 @@
  *  Last modified:     October 16, 1842
  **************************************************************************** */
 
+import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 import edu.princeton.cs.algs4.QuickFindUF;
 import edu.princeton.cs.algs4.QuickUnionUF;
-import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
-    public static void main(String[] args) {
-
-        Percolation percolation = new Percolation(100);
-        percolation.open(1, 1);
-    }
-
     private final int realSize;
     private final UnionFind unionFindImpl;
-    private final int virtualTop;
-    private final int virtualBottom;
     private final boolean[] openSet;
     private int openSites;
 
@@ -29,8 +21,6 @@ public class Percolation {
         }
 
         realSize = n;
-        virtualTop = realSize * realSize;
-        virtualBottom = realSize * realSize + 1;
         openSet = new boolean[realSize * realSize];
         openSites = 0;
 
@@ -41,16 +31,6 @@ public class Percolation {
         // init open set
         for (int i = 0; i < openSet.length; i++) {
             openSet[i] = false;
-        }
-
-        // union virtual top root obj to all top objs
-        for (int i = 1; i <= realSize; i++) {
-            unionFindImpl.union(virtualTop, convertIndex(1, i));
-        }
-
-        // union virtual bottom root obj to all top objs
-        for (int i = 1; i <= realSize; i++) {
-            unionFindImpl.union(virtualBottom, convertIndex(realSize, i));
         }
     }
 
@@ -66,10 +46,10 @@ public class Percolation {
         openSet[currentIndex] = true;
         openSites++;
 
-        if (row > 1 && isOpen(row - 1, col)) {
+        if (row == 1 || isOpen(row - 1, col)) {
             unionFindImpl.union(currentIndex, convertIndex(row - 1, col));
         }
-        if (row < realSize && isOpen(row + 1, col)) {
+        if (row == realSize || isOpen(row + 1, col)) {
             unionFindImpl.union(currentIndex, convertIndex(row + 1, col));
         }
         if (col > 1 && isOpen(row, col - 1)) {
@@ -89,7 +69,7 @@ public class Percolation {
     // is the site (row, col) full?
     public boolean isFull(int row, int col) {
         validate(row, col);
-        return unionFindImpl.connected(convertIndex(row, col), virtualTop);
+        return unionFindImpl.connected(convertIndex(row, col), convertIndex(0, 0));
     }
 
     // returns the number of open sites
@@ -99,7 +79,7 @@ public class Percolation {
 
     // does the system percolate?
     public boolean percolates() {
-        return unionFindImpl.connected(virtualTop, virtualBottom);
+        return unionFindImpl.connected(convertIndex(0, 0), convertIndex(realSize + 1, 0));
     }
 
     private void validate(int row, int col) {
@@ -108,230 +88,244 @@ public class Percolation {
     }
 
     private int convertIndex(int row, int col) {
-        return (row - 1) * realSize + col - 1;
-    }
-
-    private interface IUnionFind {
-        void union(int p, int q);
-
-        boolean connected(int p, int q);
-    }
-
-    private static class MyQuickFindUF implements IUnionFind {
-        private final int[] entries;
-
-        MyQuickFindUF(int n) {
-            entries = new int[n];
-
-            for (int i = 0; i < entries.length; i++) {
-                entries[i] = i;
-            }
+        if (1 <= row && row <= realSize) {
+            return (row - 1) * realSize + col - 1;
         }
 
-        public void union(int p, int q) {
-            if (connected(p, q)) {
-                return;
-            }
-
-            int firstEntry = entries[p];
-            int secondEntry = entries[q];
-
-            for (int i = 0; i < entries.length; i++) {
-                if (entries[i] == firstEntry) {
-                    entries[i] = secondEntry;
-                }
-            }
-        }
-
-        public boolean connected(int p, int q) {
-            validate(p);
-            validate(q);
-            return entries[p] == entries[q];
-        }
-
-        private void validate(int p) {
-            if (p < 0 || p >= entries.length) throw new IllegalArgumentException("p is out of bounds");
+        if (row < 1) {
+            return realSize * realSize;
+        } else {
+            return realSize * realSize + 1;
         }
     }
 
-    private static class MyQuickUnionUF implements IUnionFind {
-        private final int[] parents;
 
-        MyQuickUnionUF(int n) {
-            parents = new int[n];
+    public static void main(String[] args) {
 
-            for (int i = 0; i < parents.length; i++) {
-                parents[i] = i;
-            }
+        Percolation percolation = new Percolation(100);
+        percolation.open(1, 1);
+    }
+}
+
+interface IUnionFind {
+    void union(int p, int q);
+
+    boolean connected(int p, int q);
+}
+
+class MyQuickFindUF implements IUnionFind {
+    private final int[] entries;
+
+    MyQuickFindUF(int n) {
+        entries = new int[n];
+
+        for (int i = 0; i < entries.length; i++) {
+            entries[i] = i;
+        }
+    }
+
+    public void union(int p, int q) {
+        if (connected(p, q)) {
+            return;
         }
 
-        public void union(int p, int q) {
-            int firstRoot = find(p);
-            int secondRoot = find(q);
+        int firstEntry = entries[p];
+        int secondEntry = entries[q];
 
-            if (firstRoot == secondRoot) {
-                return;
+        for (int i = 0; i < entries.length; i++) {
+            if (entries[i] == firstEntry) {
+                entries[i] = secondEntry;
             }
+        }
+    }
+
+    public boolean connected(int p, int q) {
+        validate(p);
+        validate(q);
+        return entries[p] == entries[q];
+    }
+
+    private void validate(int p) {
+        if (p < 0 || p >= entries.length) throw new IllegalArgumentException("p is out of bounds");
+    }
+}
+
+class MyQuickUnionUF implements IUnionFind {
+    private final int[] parents;
+
+    MyQuickUnionUF(int n) {
+        parents = new int[n];
+
+        for (int i = 0; i < parents.length; i++) {
+            parents[i] = i;
+        }
+    }
+
+    public void union(int p, int q) {
+        int firstRoot = find(p);
+        int secondRoot = find(q);
+
+        if (firstRoot == secondRoot) {
+            return;
+        }
+        parents[firstRoot] = secondRoot;
+    }
+
+    public boolean connected(int p, int q) {
+        return find(p) == find(q);
+    }
+
+    private int find(int p) {
+        validate(p);
+
+        while (p != parents[p]) {
+            p = parents[p];
+        }
+
+        return p;
+    }
+
+    private void validate(int p) {
+        if (p < 0 || p >= parents.length) throw new IllegalArgumentException("p is out of bounds");
+    }
+}
+
+class MyWeightedQuickUnionUF implements IUnionFind {
+    private final int[] parents;
+    private final int[] heights;
+
+    MyWeightedQuickUnionUF(int n) {
+        parents = new int[n];
+
+        for (int i = 0; i < parents.length; i++) {
+            parents[i] = i;
+        }
+
+        heights = new int[n];
+
+        for (int i = 0; i < heights.length; i++) {
+            heights[i] = 1;
+        }
+    }
+
+    public void union(int p, int q) {
+        int firstRoot = find(p);
+        int secondRoot = find(q);
+
+        if (firstRoot == secondRoot) {
+            return;
+        }
+
+        if (heights[firstRoot] > heights[secondRoot]) {
+            parents[secondRoot] = firstRoot;
+        } else if (heights[firstRoot] < heights[secondRoot]) {
             parents[firstRoot] = secondRoot;
-        }
-
-        public boolean connected(int p, int q) {
-            return find(p) == find(q);
-        }
-
-        private int find(int p) {
-            validate(p);
-
-            while (p != parents[p]) {
-                p = parents[p];
-            }
-
-            return p;
-        }
-
-        private void validate(int p) {
-            if (p < 0 || p >= parents.length) throw new IllegalArgumentException("p is out of bounds");
+        } else {
+            parents[firstRoot] = secondRoot;
+            heights[secondRoot] = heights[secondRoot] + 1;
         }
     }
 
-    private static class MyWeightedQuickUnionUF implements IUnionFind {
-        private final int[] parents;
-        private final int[] heights;
-
-        MyWeightedQuickUnionUF(int n) {
-            parents = new int[n];
-
-            for (int i = 0; i < parents.length; i++) {
-                parents[i] = i;
-            }
-
-            heights = new int[n];
-
-            for (int i = 0; i < heights.length; i++) {
-                heights[i] = 1;
-            }
-        }
-
-        public void union(int p, int q) {
-            int firstRoot = find(p);
-            int secondRoot = find(q);
-
-            if (firstRoot == secondRoot) {
-                return;
-            }
-
-            if (heights[firstRoot] > heights[secondRoot]) {
-                parents[secondRoot] = firstRoot;
-            } else if (heights[firstRoot] < heights[secondRoot]) {
-                parents[firstRoot] = secondRoot;
-            } else {
-                parents[firstRoot] = secondRoot;
-                heights[secondRoot] = heights[secondRoot] + 1;
-            }
-        }
-
-        public boolean connected(int p, int q) {
-            return find(p) == find(q);
-        }
-
-        private int find(int p) {
-            validate(p);
-
-            while (p != parents[p]) {
-                p = parents[p];
-            }
-
-            return p;
-        }
-
-        private void validate(int p) {
-            if (p < 0 || p >= parents.length) throw new IllegalArgumentException("p is out of bounds");
-        }
+    public boolean connected(int p, int q) {
+        return find(p) == find(q);
     }
 
-    private static class AlgsQuickFindUF implements IUnionFind {
-        private final QuickFindUF impl;
+    private int find(int p) {
+        validate(p);
 
-        AlgsQuickFindUF(int n) {
-            impl = new QuickFindUF(n);
+        while (p != parents[p]) {
+            p = parents[p];
         }
 
-        public void union(int p, int q) {
-            impl.union(p, q);
-        }
-
-        public boolean connected(int p, int q) {
-            return impl.find(p) == impl.find(q);
-        }
+        return p;
     }
 
-    private static class AlgsQuickUnionUF implements IUnionFind {
-        private final QuickUnionUF impl;
+    private void validate(int p) {
+        if (p < 0 || p >= parents.length) throw new IllegalArgumentException("p is out of bounds");
+    }
+}
 
-        AlgsQuickUnionUF(int n) {
-            impl = new QuickUnionUF(n);
-        }
+class AlgsQuickFindUF implements IUnionFind {
+    private final QuickFindUF impl;
 
-        public void union(int p, int q) {
-            impl.union(p, q);
-        }
-
-        public boolean connected(int p, int q) {
-            return impl.find(p) == impl.find(q);
-        }
+    AlgsQuickFindUF(int n) {
+        impl = new QuickFindUF(n);
     }
 
-    private static class AlgsWeightedQuickUnionUF implements IUnionFind {
-        private final WeightedQuickUnionUF impl;
-
-        AlgsWeightedQuickUnionUF(int n) {
-            impl = new WeightedQuickUnionUF(n);
-        }
-
-        public void union(int p, int q) {
-            impl.union(p, q);
-        }
-
-        public boolean connected(int p, int q) {
-            return impl.find(p) == impl.find(q);
-        }
+    public void union(int p, int q) {
+        impl.union(p, q);
     }
 
-    private static class UnionFind {
-        private final IUnionFind impl;
+    public boolean connected(int p, int q) {
+        return impl.find(p) == impl.find(q);
+    }
+}
 
-        UnionFind(int n, String type) {
-            switch (type) {
-                case "MyQuickFindUF":
-                    impl = new MyQuickFindUF(n);
-                    break;
-                case "MyQuickUnionUF":
-                    impl = new MyQuickUnionUF(n);
-                    break;
-                case "MyWeightedQuickUnionUF":
-                    impl = new MyWeightedQuickUnionUF(n);
-                    break;
+class AlgsQuickUnionUF implements IUnionFind {
+    private final QuickUnionUF impl;
+
+    AlgsQuickUnionUF(int n) {
+        impl = new QuickUnionUF(n);
+    }
+
+    public void union(int p, int q) {
+        impl.union(p, q);
+    }
+
+    public boolean connected(int p, int q) {
+        return impl.find(p) == impl.find(q);
+    }
+}
+
+class AlgsWeightedQuickUnionUF implements IUnionFind {
+    private final WeightedQuickUnionUF impl;
+
+    AlgsWeightedQuickUnionUF(int n) {
+        impl = new WeightedQuickUnionUF(n);
+    }
+
+    public void union(int p, int q) {
+        impl.union(p, q);
+    }
+
+    public boolean connected(int p, int q) {
+        return impl.find(p) == impl.find(q);
+    }
+}
+
+class UnionFind {
+    private final IUnionFind impl;
+
+    UnionFind(int n, String type) {
+        switch (type) {
+            case "MyQuickFindUF":
+                impl = new MyQuickFindUF(n);
+                break;
+            case "MyQuickUnionUF":
+                impl = new MyQuickUnionUF(n);
+                break;
+            case "MyWeightedQuickUnionUF":
+                impl = new MyWeightedQuickUnionUF(n);
+                break;
                 case "AlgsQuickFindUF":
                     impl = new AlgsQuickFindUF(n);
                     break;
                 case "AlgsQuickUnionUF":
                     impl = new AlgsQuickUnionUF(n);
                     break;
-                case "AlgsWeightedQuickUnionUF":
-                    impl = new AlgsWeightedQuickUnionUF(n);
-                    break;
-                default:
-                    throw new IllegalArgumentException("UnionFind: Unrecognized type");
-            }
-        }
-
-        public void union(int p, int q) {
-            impl.union(p, q);
-        }
-
-        public boolean connected(int p, int q) {
-            return impl.connected(p, q);
+            case "AlgsWeightedQuickUnionUF":
+                impl = new AlgsWeightedQuickUnionUF(n);
+                break;
+            default:
+                throw new IllegalArgumentException("UnionFind: Unrecognized type");
         }
     }
 
+    public void union(int p, int q) {
+        impl.union(p, q);
+    }
+
+    public boolean connected(int p, int q) {
+        return impl.connected(p, q);
+    }
 }

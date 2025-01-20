@@ -7,6 +7,8 @@ public class PercolationStats {
 
     // perform independent trials on an n-by-n grid
     public PercolationStats(int n, int trials) {
+        if (trials <= 0) {throw new IllegalArgumentException("trials <= 0"); };
+
         observations = new double[trials];
 
         for (int i = 0; i < trials; i++) {
