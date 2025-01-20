@@ -36,7 +36,7 @@ public class Percolation {
 
         // Here to change uf implementation
         // options: MyQuickFindUF, MyQuickUnionUF, AlgsQuickFindUF, AlgsQuickUnionUF, AlgsWeightedQuickUnionUF
-        unionFindImpl = new UnionFind(n * n + 2, "MyWeightedQuickUnionUF");
+        unionFindImpl = new UnionFind(n * n + 2, "AlgsWeightedQuickUnionUF");
 
         // init open set
         for (int i = 0; i < openSet.length; i++) {
@@ -110,7 +110,6 @@ public class Percolation {
     private int convertIndex(int row, int col) {
         return (row - 1) * realSize + col - 1;
     }
-
 
     private interface IUnionFind {
         void union(int p, int q);
@@ -195,7 +194,6 @@ public class Percolation {
         }
     }
 
-    // TODO
     private static class MyWeightedQuickUnionUF implements IUnionFind {
         private final int[] parents;
         private final int[] heights;

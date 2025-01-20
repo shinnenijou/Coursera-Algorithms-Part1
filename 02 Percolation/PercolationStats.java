@@ -10,7 +10,6 @@ public class PercolationStats {
         observations = new double[trials];
 
         for (int i = 0; i < trials; i++) {
-            StdOut.println("Simulate No. " + (i + 1));
             Percolation percolation = new Percolation(n);
 
             while (!percolation.percolates()) {
