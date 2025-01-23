@@ -5,10 +5,13 @@
  **************************************************************************** */
 
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
-import edu.princeton.cs.algs4.QuickFindUF;
-import edu.princeton.cs.algs4.QuickUnionUF;
+import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
 
 public class Percolation {
+    // Here to change uf implementation
+    private static final String UF_IMPL = "AlgsWeightedQuickUnionUF";
+
     private final int realSize;
     private final UnionFind unionFindImpl;
     private final boolean[] openSet;
@@ -21,14 +24,13 @@ public class Percolation {
         }
 
         realSize = n;
-        openSet = new boolean[realSize * realSize];
         openSites = 0;
 
-        // Here to change uf implementation
-        // options: MyQuickFindUF, MyQuickUnionUF, AlgsQuickFindUF, AlgsQuickUnionUF, AlgsWeightedQuickUnionUF
-        unionFindImpl = new UnionFind(n * n + 2, "AlgsWeightedQuickUnionUF");
+        unionFindImpl = new UnionFind(realSize * realSize + 2, UF_IMPL);
 
         // init open set
+        openSet = new boolean[realSize * realSize];
+
         for (int i = 0; i < openSet.length; i++) {
             openSet[i] = false;
         }
@@ -36,8 +38,6 @@ public class Percolation {
 
     // opens the site (row, col) if it is not open already
     public void open(int row, int col) {
-        validate(row, col);
-
         if (isOpen(row, col)) {
             return;
         }
@@ -46,15 +46,22 @@ public class Percolation {
         openSet[currentIndex] = true;
         openSites++;
 
+        // up
         if (row == 1 || isOpen(row - 1, col)) {
             unionFindImpl.union(currentIndex, convertIndex(row - 1, col));
         }
+
+        // down
         if (row == realSize || isOpen(row + 1, col)) {
             unionFindImpl.union(currentIndex, convertIndex(row + 1, col));
         }
+
+        // left
         if (col > 1 && isOpen(row, col - 1)) {
             unionFindImpl.union(currentIndex, convertIndex(row, col - 1));
         }
+
+        // right
         if (col < realSize && isOpen(row, col + 1)) {
             unionFindImpl.union(currentIndex, convertIndex(row, col + 1));
         }
@@ -83,27 +90,36 @@ public class Percolation {
     }
 
     private void validate(int row, int col) {
-        if (1 > row || row > realSize || 1 > col || col > realSize)
+        if (row < 1 || row > realSize || col < 1 || col > realSize)
             throw new IllegalArgumentException("row and col must be in the range of [1, n]");
     }
 
     private int convertIndex(int row, int col) {
         if (1 <= row && row <= realSize) {
-            return (row - 1) * realSize + col - 1;
+            return (row - 1) * realSize + (col - 1);
         }
 
+        // virtual top
         if (row < 1) {
             return realSize * realSize;
-        } else {
-            return realSize * realSize + 1;
         }
+
+        // virtual bottom
+        return realSize * realSize + 1;
     }
 
-
     public static void main(String[] args) {
+        if (StdIn.isEmpty()) {
+            return;
+        }
+        Percolation percolation = new Percolation(StdIn.readInt());
 
-        Percolation percolation = new Percolation(100);
-        percolation.open(1, 1);
+        while (!StdIn.isEmpty()) {
+            int row = StdIn.readInt();
+            int col = StdIn.readInt();
+            percolation.open(row, col);
+            StdOut.println("(" + row + ", " + col + ") isFull = " + percolation.isFull(row, col));
+        }
     }
 }
 
@@ -245,37 +261,37 @@ class MyWeightedQuickUnionUF implements IUnionFind {
     }
 }
 
-class AlgsQuickFindUF implements IUnionFind {
-    private final QuickFindUF impl;
-
-    AlgsQuickFindUF(int n) {
-        impl = new QuickFindUF(n);
-    }
-
-    public void union(int p, int q) {
-        impl.union(p, q);
-    }
-
-    public boolean connected(int p, int q) {
-        return impl.find(p) == impl.find(q);
-    }
-}
-
-class AlgsQuickUnionUF implements IUnionFind {
-    private final QuickUnionUF impl;
-
-    AlgsQuickUnionUF(int n) {
-        impl = new QuickUnionUF(n);
-    }
-
-    public void union(int p, int q) {
-        impl.union(p, q);
-    }
-
-    public boolean connected(int p, int q) {
-        return impl.find(p) == impl.find(q);
-    }
-}
+//class AlgsQuickFindUF implements IUnionFind {
+//    private final QuickFindUF impl;
+//
+//    AlgsQuickFindUF(int n) {
+//        impl = new QuickFindUF(n);
+//    }
+//
+//    public void union(int p, int q) {
+//        impl.union(p, q);
+//    }
+//
+//    public boolean connected(int p, int q) {
+//        return impl.find(p) == impl.find(q);
+//    }
+//}
+//
+//class AlgsQuickUnionUF implements IUnionFind {
+//    private final QuickUnionUF impl;
+//
+//    AlgsQuickUnionUF(int n) {
+//        impl = new QuickUnionUF(n);
+//    }
+//
+//    public void union(int p, int q) {
+//        impl.union(p, q);
+//    }
+//
+//    public boolean connected(int p, int q) {
+//        return impl.find(p) == impl.find(q);
+//    }
+//}
 
 class AlgsWeightedQuickUnionUF implements IUnionFind {
     private final WeightedQuickUnionUF impl;
@@ -307,12 +323,12 @@ class UnionFind {
             case "MyWeightedQuickUnionUF":
                 impl = new MyWeightedQuickUnionUF(n);
                 break;
-                case "AlgsQuickFindUF":
-                    impl = new AlgsQuickFindUF(n);
-                    break;
-                case "AlgsQuickUnionUF":
-                    impl = new AlgsQuickUnionUF(n);
-                    break;
+//            case "AlgsQuickFindUF":
+//                impl = new AlgsQuickFindUF(n);
+//                break;
+//            case "AlgsQuickUnionUF":
+//                impl = new AlgsQuickUnionUF(n);
+//                break;
             case "AlgsWeightedQuickUnionUF":
                 impl = new AlgsWeightedQuickUnionUF(n);
                 break;
