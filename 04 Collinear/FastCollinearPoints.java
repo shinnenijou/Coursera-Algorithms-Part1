@@ -8,9 +8,9 @@ import java.util.Comparator;
 
 public class FastCollinearPoints {
     private final Point[] points;
-    private LineSegment[] segments;
+    private ArrayList<LineSegment> segments;
 
-    private static class Pair implements Comparable<Pair> {
+    private static class Pair {
         public Point p1;
         public Point p2;
 
@@ -18,10 +18,14 @@ public class FastCollinearPoints {
             this.p1 = p1;
             this.p2 = p2;
         }
+    }
 
+    private static class PairComparator implements Comparator<Pair> {
         @Override
-        public int compareTo(Pair that) {
-            return Double.compare(this.p1.slopeTo(this.p2), that.p1.slopeTo(that.p2));
+        public int compare(Pair lhs, Pair rhs) {
+            int i = lhs.p1.compareTo(rhs.p1);
+            if (i != 0) return i;
+            return lhs.p2.compareTo(rhs.p2);
         }
     }
 
@@ -29,54 +33,78 @@ public class FastCollinearPoints {
     public FastCollinearPoints(Point[] points) {
         if (points == null) throw new IllegalArgumentException("Constructor parameters may not be null");
 
-        for (int i = 0; i < points.length; i++) {
-            if (points[i] == null) throw new IllegalArgumentException("point may not be null");
-
-            for (int j = i + 1; j < points.length; j++) {
-                if (points[i].compareTo(points[j]) == 0) throw new IllegalArgumentException("duplicate point");
-            }
+        for (Point point : points) {
+            if (point == null) throw new IllegalArgumentException("point may not be null");
         }
 
         this.points = points.clone();
+        Arrays.sort(points);
+
+        for(int i = 0; i < points.length - 1; i++) {
+            if (points[i].compareTo(points[i + 1]) == 0) {
+                throw new IllegalArgumentException("Duplicate point");
+            }
+        }
     }
 
     // the number of line segments
     public int numberOfSegments() {
         findSegments();
-        return segments.length;
+        return segments.size();
     }
 
     // the line segments
     public LineSegment[] segments() {
         findSegments();
-        return segments;
+        return segments.toArray(new LineSegment[0]);
     }
 
     private void findSegments() {
         if (segments != null) return;
 
-        // point pair consisting of collinear segment
+        segments = new ArrayList<>();
+
+        // first time to ensure natural order(output p->r when p->q->s->r is collinear)
+        // constructor guaranteed unique order
+        Arrays.sort(points, 0, points.length);
+        Point[] tempPoints = new Point[points.length];
+
+        // point pair container to remove duplicate collinear segment
         ArrayList<Pair> pairs = new ArrayList<>();
 
-        for (int i = 0; i < points.length - 3; i++) {
-            // first time to ensure natural order(output p->r when p->q->s->r is collinear)
-            Arrays.sort(points, i, points.length);
+        for (int i = 0; i < points.length; i++) {
+            System.arraycopy(points, 0, tempPoints, 0, tempPoints.length);
 
-            Point p = points[i];
-            Comparator<Point> slopeComp = p.slopeOrder();
+            // swap (0, i)
+            Point point = tempPoints[i];
+            tempPoints[i] = tempPoints[0];
+            tempPoints[0] = point;
+
+            Comparator<Point> slopeComp = point.slopeOrder();
 
             // This sort is guaranteed to be stable
-            Arrays.sort(points, i + 1, points.length, slopeComp);
+            Arrays.sort(tempPoints, 1, tempPoints.length, slopeComp);
 
             // j: point to the first index whose slope is equal to adjacent points
-            for (int j = i + 1, k = i + 2; k <= points.length; ++k) {
-                if (k < points.length && slopeComp.compare(points[j], points[k]) == 0) {
+            for (int j = 1, k = 2; k <= tempPoints.length; ++k) {
+                if (k < tempPoints.length && slopeComp.compare(tempPoints[j], tempPoints[k]) == 0) {
                     continue;
                 }
 
                 // if 4 or more points collinear, add segment to result
                 if (k - j >= 3) {
-                    pairs.add(new Pair(p, points[k - 1]));
+                    Point start = point;
+                    Point end = point;
+
+                    for (int l = j; l < k; ++l) {
+                        if (tempPoints[l].compareTo(start) < 0) {
+                            start = tempPoints[l];
+                        } else if (tempPoints[l].compareTo(end) > 0) {
+                            end = tempPoints[l];
+                        }
+                    }
+
+                    pairs.add(new Pair(start, end));
                 }
 
                 // move to current point
@@ -84,22 +112,17 @@ public class FastCollinearPoints {
             }
         }
 
-        // subsegment always appears later and with the same end
-        for (int i = 0; i < pairs.size(); i++) {
-            for (int j = i + 1; j < pairs.size(); j++) {
-                if (pairs.get(i).compareTo(pairs.get(j)) == 0 && pairs.get(i).p2.compareTo(pairs.get(j).p2) == 0) {
-                    pairs.remove(j);
-                    j--;
-                }
+        // remove duplicate collinear segment
+        Pair lastPair = null;
+        Comparator<Pair> pairComp = new PairComparator();
+
+        pairs.sort(pairComp);
+
+        for (Pair pair : pairs) {
+            if (lastPair == null || pairComp.compare(lastPair, pair) != 0) {
+                lastPair = pair;
+                segments.add(new LineSegment(lastPair.p1, lastPair.p2));
             }
-        }
-
-        segments = new LineSegment[pairs.size()];
-
-        for (int i = 0; i < segments.length; i++) {
-            Pair pair = pairs.get(i);
-            if (pair == null) continue;
-            segments[i] = new LineSegment(pair.p1, pair.p2);
         }
     }
 

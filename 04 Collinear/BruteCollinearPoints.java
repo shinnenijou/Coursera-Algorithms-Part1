@@ -13,15 +13,18 @@ public class BruteCollinearPoints {
     public BruteCollinearPoints(Point[] points) {
         if (points == null) throw new IllegalArgumentException("Constructor parameters may not be null");
 
-        for (int i = 0; i < points.length; i++) {
-            if (points[i] == null) throw new IllegalArgumentException("point may not be null");
-
-            for (int j = i + 1; j < points.length; j++) {
-                if (points[i].compareTo(points[j]) == 0) throw new IllegalArgumentException("duplicate point");
-            }
+        for (Point point : points) {
+            if (point == null) throw new IllegalArgumentException("point may not be null");
         }
 
         this.points = points.clone();
+        Arrays.sort(points);
+
+        for(int i = 0; i < points.length - 1; i++) {
+            if (points[i].compareTo(points[i + 1]) == 0) {
+                throw new IllegalArgumentException("Duplicate point");
+            }
+        }
     }
 
     // the number of line segments
@@ -41,7 +44,7 @@ public class BruteCollinearPoints {
         Point maxPoint = points[0];
 
         for (int i = 1; i < points.length; i++) {
-            if (points[i].compareTo(maxPoint) > 0){
+            if (points[i].compareTo(maxPoint) > 0) {
                 maxPoint = points[i];
             }
         }
@@ -54,7 +57,7 @@ public class BruteCollinearPoints {
         Point minPoint = points[0];
 
         for (int i = 1; i < points.length; i++) {
-            if (points[i].compareTo(minPoint) < 0){
+            if (points[i].compareTo(minPoint) < 0) {
                 minPoint = points[i];
             }
         }
