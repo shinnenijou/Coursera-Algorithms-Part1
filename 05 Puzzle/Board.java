@@ -4,38 +4,40 @@ import edu.princeton.cs.algs4.StdOut;
 import java.util.ArrayList;
 
 public final class Board {
-    private final int dimension;
-    private int hammingDistance;
-    private int manhattanDistance;
-    private final int[][] tiles;
+    // helper function
+    private static void swapTiles(int[][] tiles, int row1, int col1, int row2, int col2) {
+        int temp = tiles[row1][col1];
+        tiles[row1][col1] = tiles[row2][col2];
+        tiles[row2][col2] = temp;
+    }
+
+    private final short[][] tiles;
 
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
     public Board(int[][] tiles) {
         if (tiles == null) throw new IllegalArgumentException("tiles cannot be null");
 
-        this.dimension = tiles.length;
-        this.tiles = new int[dimension][dimension];
+        this.tiles = new short[tiles.length][tiles[0].length];
 
-        for (int i = 0; i < dimension; i++) {
-            System.arraycopy(tiles[i], 0, this.tiles[i], 0, dimension);
+        for (int i = 0; i < tiles.length; i++) {
+            for (int j = 0; j < tiles[i].length; j++) {
+                this.tiles[i][j] = (short) tiles[i][j];
+            }
         }
-
-        initHamming();
-        initManhattan();
     }
 
     // string representation of this board
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
-        int digit = (int) Math.log10(dimension * dimension - 1) + 1;
+        int digit = (int) Math.log10(dimension() * dimension() - 1) + 1;
         String format = "%" + digit + "d";
 
-        sb.append(String.format("%d\n", dimension));
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                sb.append(String.format(format, tiles[i][j]));
+        sb.append(String.format("%d\n", dimension()));
+        for (short[] tile : tiles) {
+            for (short i : tile) {
+                sb.append(String.format(format, i));
                 sb.append(' ');
             }
             sb.deleteCharAt(sb.length() - 1);
@@ -47,16 +49,38 @@ public final class Board {
 
     // board dimension n
     public int dimension() {
-        return dimension;
+        return tiles.length;
     }
 
     // number of tiles out of place
     public int hamming() {
+        int hammingDistance = 0;
+        int dimension = dimension();
+
+        for (int i = 0; i < tiles.length; i++) {
+            for (int j = 0; j < tiles[i].length; j++) {
+                if (tiles[i][j] == 0) continue;
+                if (tiles[i][j] != i * dimension + j + 1) hammingDistance++;
+            }
+        }
+
         return hammingDistance;
     }
 
     // sum of Manhattan distances between tiles and goal
     public int manhattan() {
+        int manhattanDistance = 0;
+        int dimension = dimension();
+
+        for (int i = 0; i < tiles.length; i++) {
+            for (int j = 0; j < tiles[i].length; j++) {
+                if (tiles[i][j] == 0) continue;
+                int manhattanDistanceRow = Math.abs(i - (tiles[i][j] - 1) / dimension);
+                int manhattanDistanceCol = Math.abs(j - (tiles[i][j] - 1) % dimension);
+                manhattanDistance += manhattanDistanceRow + manhattanDistanceCol;
+            }
+        }
+
         return manhattanDistance;
     }
 
@@ -71,10 +95,10 @@ public final class Board {
         if (y == null) return false;
         if (y.getClass() != Board.class) return false;
         Board that = (Board) y;
-        if (dimension != that.dimension) return false;
+        if (dimension() != that.dimension()) return false;
 
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
+        for (int i = 0; i < tiles.length; i++) {
+            for (int j = 0; j < tiles[i].length; j++) {
                 if (tiles[i][j] != that.tiles[i][j]) return false;
             }
         }
@@ -84,7 +108,8 @@ public final class Board {
 
     // all neighboring boards
     public Iterable<Board> neighbors() {
-        ArrayList<Board> neighbors = new ArrayList<>();
+        ArrayList<Board> neighbors = new ArrayList<>(4);
+        int dimension = dimension();
 
         int zeroRow = 0;
         int zeroCol = 0;
@@ -99,32 +124,40 @@ public final class Board {
             }
         }
 
+        int[][] newTiles = new int[dimension][dimension];
+
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                newTiles[i][j] = tiles[i][j];
+            }
+        }
+
         // up
         if (zeroRow > 0) {
-            swapTiles(zeroRow, zeroCol, zeroRow - 1, zeroCol);
-            neighbors.add(new Board(tiles));
-            swapTiles(zeroRow, zeroCol, zeroRow - 1, zeroCol);
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow - 1, zeroCol);
+            neighbors.add(new Board(newTiles));
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow - 1, zeroCol);
         }
 
         // right
         if (zeroCol + 1 < dimension) {
-            swapTiles(zeroRow, zeroCol, zeroRow, zeroCol + 1);
-            neighbors.add(new Board(tiles));
-            swapTiles(zeroRow, zeroCol, zeroRow, zeroCol + 1);
+            swapTiles(newTiles,zeroRow, zeroCol, zeroRow, zeroCol + 1);
+            neighbors.add(new Board(newTiles));
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow, zeroCol + 1);
         }
 
         // down
         if (zeroRow + 1 < dimension) {
-            swapTiles(zeroRow, zeroCol, zeroRow + 1, zeroCol);
-            neighbors.add(new Board(tiles));
-            swapTiles(zeroRow, zeroCol, zeroRow + 1, zeroCol);
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow + 1, zeroCol);
+            neighbors.add(new Board(newTiles));
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow + 1, zeroCol);
         }
 
         // left
         if (zeroCol > 0) {
-            swapTiles(zeroRow, zeroCol, zeroRow, zeroCol - 1);
-            neighbors.add(new Board(tiles));
-            swapTiles(zeroRow, zeroCol, zeroRow, zeroCol - 1);
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow, zeroCol - 1);
+            neighbors.add(new Board(newTiles));
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow, zeroCol - 1);
         }
 
         return neighbors;
@@ -132,10 +165,13 @@ public final class Board {
 
     // a board that is obtained by exchanging any pair of tiles
     public Board twin() {
+        int dimension = dimension();
         int[][] newTiles = new int[dimension][dimension];
 
         for (int i = 0; i < dimension; i++) {
-            System.arraycopy(tiles[i], 0, newTiles[i], 0, dimension);
+            for (int j = 0; j < dimension; j++) {
+                newTiles[i][j] = tiles[i][j];
+            }
         }
 
         for (int i = 0; i < dimension; i++) {
@@ -150,59 +186,6 @@ public final class Board {
         return new Board(newTiles);
     }
 
-    private int correctTile(int row, int col) {
-        if (row == dimension - 1 && col == dimension - 1) {
-            return 0;
-        }
-        return row * dimension + col + 1;
-    }
-
-    private int correctRow(int tile) {
-        if (tile == 0) {
-            return dimension - 1;
-        }
-        return (tile - 1) / dimension;
-    }
-
-    private int correctCol(int tile) {
-        if (tile == 0) {
-            return dimension - 1;
-        }
-        return (tile - 1) % dimension;
-    }
-
-    // Hamming Distance: the number of tiles in the wrong position
-    private void initHamming() {
-        hammingDistance = 0;
-
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                if (tiles[i][j] == 0) continue;
-                if (tiles[i][j] != correctTile(i, j)) hammingDistance++;
-            }
-        }
-    }
-
-    // Manhattan Distance: the sum of the Manhattan distances from the tiles to their goal positions.
-    private void initManhattan() {
-        manhattanDistance = 0;
-
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                if (tiles[i][j] == 0) continue;
-                int manhattanDistanceRow = Math.abs(i - correctRow(tiles[i][j]));
-                int manhattanDistanceCol = Math.abs(j - correctCol(tiles[i][j]));
-                manhattanDistance += manhattanDistanceRow + manhattanDistanceCol;
-            }
-        }
-    }
-
-    private void swapTiles(int row1, int col1, int row2, int col2) {
-        int temp = tiles[row1][col1];
-        tiles[row1][col1] = tiles[row2][col2];
-        tiles[row2][col2] = temp;
-    }
-
     // unit testing (not graded)
     public static void main(String[] args) {
         int n = StdIn.readInt();
@@ -213,7 +196,7 @@ public final class Board {
 
         Board initial = new Board(tiles);
         StdOut.println(initial);
-        StdOut.println("Dimension: " + initial.dimension);
+        StdOut.println("Dimension: " + initial.dimension());
         StdOut.println("Hamming: " + initial.hamming());
         StdOut.println("Manhattan: " + initial.manhattan());
         StdOut.println("IsGoal: " + initial.isGoal());

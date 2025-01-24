@@ -10,23 +10,32 @@ public class Solver {
         public Board board;
         public int moves;
         public Node prev;
+        public int distance;
 
         public Node(Board board, int moves, Node prev) {
             this.board = board;
             this.moves = moves;
             this.prev = prev;
+            this.distance = board.manhattan() + this.moves;
         }
     }
 
     // Use MinPQ -> element with the lowest priority firstly out -> lower === shorter
-    private static class ManhattanComparator implements Comparator<Node> {
+    private static class NodeComparator implements Comparator<Node> {
         @Override
         public int compare(Node o1, Node o2) {
-            int distance1 = o1.board.manhattan() + o1.moves;
-            int distance2 = o2.board.manhattan() + o2.moves;
-            if (distance1 != distance2) return distance1 - distance2;
+            if (o1.distance != o2.distance) return o1.distance - o2.distance;
             return o1.moves - o2.moves;
         }
+    }
+
+    // helper function
+    private static boolean inPreviousNeighbor(Iterable<Board> boards, Board board) {
+        for (Board neighbor : boards) {
+            if (neighbor.equals(board)) return true;
+        }
+
+        return false;
     }
 
     private final Board initial;
@@ -73,11 +82,13 @@ public class Solver {
         goalNode = null;
 
         // init board
-        MinPQ<Node> queueInit = new MinPQ<>(new ManhattanComparator());
+        Iterable<Board> previousNeighborInit = new ArrayList<>();
+        MinPQ<Node> queueInit = new MinPQ<>(new NodeComparator());
         queueInit.insert(new Node(initial, 0, null));
 
         // twin board
-        MinPQ<Node> queueTwin = new MinPQ<>(new ManhattanComparator());
+        Iterable<Board> previousNeighborTwin = new ArrayList<>();
+        MinPQ<Node> queueTwin = new MinPQ<>(new NodeComparator());
         queueTwin.insert(new Node(initial.twin(), 0, null));
 
         while (!queueInit.isEmpty() && !queueTwin.isEmpty()) {
@@ -89,9 +100,14 @@ public class Solver {
                 break;
             }
 
-            for (Board board : node.board.neighbors()) {
+            Iterable<Board> neighbors = node.board.neighbors();
+
+            for (Board board : neighbors) {
+                if (inPreviousNeighbor(previousNeighborInit, board)) continue;
                 queueInit.insert(new Node(board, node.moves + 1, node));
             }
+
+            previousNeighborInit = neighbors;
 
             // Process twin board
             node = queueTwin.delMin();
@@ -100,10 +116,14 @@ public class Solver {
                 break;
             }
 
-            for (Board board : node.board.neighbors()) {
+            neighbors = node.board.neighbors();
+
+            for (Board board : neighbors) {
+                if (inPreviousNeighbor(previousNeighborTwin, board)) continue;
                 queueTwin.insert(new Node(board, node.moves + 1, node));
             }
 
+            previousNeighborTwin = neighbors;
         }
     }
 
