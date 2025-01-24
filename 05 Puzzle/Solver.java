@@ -6,9 +6,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 public class Solver {
-    private final Board initial;
-    private Node goalNode;
-
     private static class Node {
         public Board board;
         public int moves;
@@ -18,17 +15,6 @@ public class Solver {
             this.board = board;
             this.moves = moves;
             this.prev = prev;
-        }
-    }
-
-    // Use MinPQ -> element with the lowest priority firstly out -> lower === shorter
-    private static class HammingComparator implements Comparator<Node> {
-        @Override
-        public int compare(Node o1, Node o2) {
-            int distance1 = o1.board.hamming() + o1.moves;
-            int distance2 = o2.board.hamming() + o2.moves;
-            if (distance1 != distance2) return distance1 - distance2;
-            return o1.moves - o2.moves;
         }
     }
 
@@ -43,16 +29,17 @@ public class Solver {
         }
     }
 
-    private void tryToSolve(Board initial) {
+    private final Board initial;
+    private Node goalNode;
+
+    private void tryToSolve() {
         goalNode = null;
 
         // init board
-        ArrayList<Board> searchedBoardsInit = new ArrayList<>();
         MinPQ<Node> queueInit = new MinPQ<>(new ManhattanComparator());
         queueInit.insert(new Node(initial, 0, null));
 
         // twin board
-        ArrayList<Board> searchedBoardsTwin = new ArrayList<>();
         MinPQ<Node> queueTwin = new MinPQ<>(new ManhattanComparator());
         queueTwin.insert(new Node(initial.twin(), 0, null));
 
@@ -66,12 +53,8 @@ public class Solver {
             }
 
             for (Board board : node.board.neighbors()) {
-                if (!searchedBoardsInit.contains(board)) {
-                    queueInit.insert(new Node(board, node.moves + 1, node));
-                }
+                queueInit.insert(new Node(board, node.moves + 1, node));
             }
-
-            searchedBoardsInit.add(node.board);
 
             // Process twin board
             node = queueTwin.delMin();
@@ -81,20 +64,17 @@ public class Solver {
             }
 
             for (Board board : node.board.neighbors()) {
-                if (!searchedBoardsTwin.contains(board)) {
-                    queueTwin.insert(new Node(board, node.moves + 1, node));
-                }
+                queueTwin.insert(new Node(board, node.moves + 1, node));
             }
 
-            searchedBoardsTwin.add(node.board);
         }
     }
 
     // find a solution to the initial board (using the A* algorithm)
-    public Solver(Board initial) {
-        if (initial == null) throw new IllegalArgumentException();
-        this.initial = initial;
-        tryToSolve(this.initial);
+    public Solver(Board board) {
+        if (board == null) throw new IllegalArgumentException();
+        initial = board;
+        tryToSolve();
     }
 
     // is the initial board solvable? (see below)
