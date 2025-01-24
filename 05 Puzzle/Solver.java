@@ -32,6 +32,43 @@ public class Solver {
     private final Board initial;
     private Node goalNode;
 
+    // find a solution to the initial board (using the A* algorithm)
+    public Solver(Board board) {
+        if (board == null) throw new IllegalArgumentException();
+        initial = board;
+        tryToSolve();
+    }
+
+    // is the initial board solvable? (see below)
+    public boolean isSolvable() {
+        return goalNode != null;
+    }
+
+    // min number of moves to solve initial board; -1 if unsolvable
+    public int moves() {
+        if (!isSolvable()) return -1;
+        return goalNode.moves;
+    }
+
+    // sequence of boards in a shortest solution; null if unsolvable
+    public Iterable<Board> solution() {
+        if (!isSolvable()) return null;
+
+        ArrayList<Board> solution = new ArrayList<>();
+
+        for (Node node = goalNode; node != null; node = node.prev) {
+            solution.add(node.board);
+        }
+
+        for (int i = 0, j = solution.size() - 1; i < j; i++, j--) {
+            Board temp = solution.get(i);
+            solution.set(i, solution.get(j));
+            solution.set(j, temp);
+        }
+
+        return solution;
+    }
+
     private void tryToSolve() {
         goalNode = null;
 
@@ -68,43 +105,6 @@ public class Solver {
             }
 
         }
-    }
-
-    // find a solution to the initial board (using the A* algorithm)
-    public Solver(Board board) {
-        if (board == null) throw new IllegalArgumentException();
-        initial = board;
-        tryToSolve();
-    }
-
-    // is the initial board solvable? (see below)
-    public boolean isSolvable() {
-        return goalNode != null;
-    }
-
-    // min number of moves to solve initial board; -1 if unsolvable
-    public int moves() {
-        if (!isSolvable()) return -1;
-        return goalNode.moves;
-    }
-
-    // sequence of boards in a shortest solution; null if unsolvable
-    public Iterable<Board> solution() {
-        if (!isSolvable()) return null;
-
-        ArrayList<Board> solution = new ArrayList<>();
-
-        for (Node node = goalNode; node != null; node = node.prev) {
-            solution.add(node.board);
-        }
-
-        for (int i = 0, j = solution.size() - 1; i < j; i++, j--) {
-            Board temp = solution.get(i);
-            solution.set(i, solution.get(j));
-            solution.set(j, temp);
-        }
-
-        return solution;
     }
 
     // test client (see below)

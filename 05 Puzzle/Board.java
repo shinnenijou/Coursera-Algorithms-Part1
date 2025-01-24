@@ -9,59 +9,6 @@ public final class Board {
     private int manhattanDistance;
     private final int[][] tiles;
 
-    private int correctTile(int row, int col) {
-        if (row == dimension - 1 && col == dimension - 1) {
-            return 0;
-        }
-        return row * dimension + col + 1;
-    }
-
-    private int correctRow(int tile) {
-        if (tile == 0) {
-            return dimension - 1;
-        }
-        return (tile - 1) / dimension;
-    }
-
-    private int correctCol(int tile) {
-        if (tile == 0) {
-            return dimension - 1;
-        }
-        return (tile - 1) % dimension;
-    }
-
-    // Hamming Distance: the number of tiles in the wrong position
-    private void initHamming() {
-        hammingDistance = 0;
-
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                if (tiles[i][j] == 0) continue;
-                if (tiles[i][j] != correctTile(i, j)) hammingDistance++;
-            }
-        }
-    }
-
-    // Manhattan Distance: the sum of the Manhattan distances from the tiles to their goal positions.
-    private void initManhattan() {
-        manhattanDistance = 0;
-
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
-                if (tiles[i][j] == 0) continue;
-                int manhattanDistanceRow = Math.abs(i - correctRow(tiles[i][j]));
-                int manhattanDistanceCol = Math.abs(j - correctCol(tiles[i][j]));
-                manhattanDistance += manhattanDistanceRow + manhattanDistanceCol;
-            }
-        }
-    }
-
-    private void swapTiles(int row1, int col1, int row2, int col2) {
-        int temp = tiles[row1][col1];
-        tiles[row1][col1] = tiles[row2][col2];
-        tiles[row2][col2] = temp;
-    }
-
     // create a board from an n-by-n array of tiles,
     // where tiles[row][col] = tile at (row, col)
     public Board(int[][] tiles) {
@@ -122,10 +69,9 @@ public final class Board {
     @Override
     public boolean equals(Object y) {
         if (y == null) return false;
-        if (y.getClass() !=  Board.class) return false;
+        if (y.getClass() != Board.class) return false;
         Board that = (Board) y;
-        if (dimension != that.dimension || hamming() != that.hamming() || manhattan() != that.manhattan())
-            return false;
+        if (dimension != that.dimension) return false;
 
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
@@ -202,6 +148,59 @@ public final class Board {
         }
 
         return new Board(newTiles);
+    }
+
+    private int correctTile(int row, int col) {
+        if (row == dimension - 1 && col == dimension - 1) {
+            return 0;
+        }
+        return row * dimension + col + 1;
+    }
+
+    private int correctRow(int tile) {
+        if (tile == 0) {
+            return dimension - 1;
+        }
+        return (tile - 1) / dimension;
+    }
+
+    private int correctCol(int tile) {
+        if (tile == 0) {
+            return dimension - 1;
+        }
+        return (tile - 1) % dimension;
+    }
+
+    // Hamming Distance: the number of tiles in the wrong position
+    private void initHamming() {
+        hammingDistance = 0;
+
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                if (tiles[i][j] == 0) continue;
+                if (tiles[i][j] != correctTile(i, j)) hammingDistance++;
+            }
+        }
+    }
+
+    // Manhattan Distance: the sum of the Manhattan distances from the tiles to their goal positions.
+    private void initManhattan() {
+        manhattanDistance = 0;
+
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                if (tiles[i][j] == 0) continue;
+                int manhattanDistanceRow = Math.abs(i - correctRow(tiles[i][j]));
+                int manhattanDistanceCol = Math.abs(j - correctCol(tiles[i][j]));
+                manhattanDistance += manhattanDistanceRow + manhattanDistanceCol;
+            }
+        }
+    }
+
+    private void swapTiles(int row1, int col1, int row2, int col2) {
+        int temp = tiles[row1][col1];
+        tiles[row1][col1] = tiles[row2][col2];
+        tiles[row2][col2] = temp;
     }
 
     // unit testing (not graded)
