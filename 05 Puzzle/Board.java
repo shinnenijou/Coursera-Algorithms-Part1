@@ -141,7 +141,7 @@ public final class Board {
 
         // right
         if (zeroCol + 1 < dimension) {
-            swapTiles(newTiles,zeroRow, zeroCol, zeroRow, zeroCol + 1);
+            swapTiles(newTiles, zeroRow, zeroCol, zeroRow, zeroCol + 1);
             neighbors.add(new Board(newTiles));
             swapTiles(newTiles, zeroRow, zeroCol, zeroRow, zeroCol + 1);
         }

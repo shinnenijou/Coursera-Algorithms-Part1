@@ -7,10 +7,10 @@ import java.util.Comparator;
 
 public class Solver {
     private static class Node {
-        public Board board;
-        public int moves;
-        public Node prev;
-        public int distance;
+        public final Board board;
+        public final int moves;
+        public final Node prev;
+        public final int distance;
 
         public Node(Board board, int moves, Node prev) {
             this.board = board;
@@ -27,15 +27,6 @@ public class Solver {
             if (o1.distance != o2.distance) return o1.distance - o2.distance;
             return o1.moves - o2.moves;
         }
-    }
-
-    // helper function
-    private static boolean inPreviousNeighbor(Iterable<Board> boards, Board board) {
-        for (Board neighbor : boards) {
-            if (neighbor.equals(board)) return true;
-        }
-
-        return false;
     }
 
     private final Board initial;
@@ -82,12 +73,10 @@ public class Solver {
         goalNode = null;
 
         // init board
-        Iterable<Board> previousNeighborInit = new ArrayList<>();
         MinPQ<Node> queueInit = new MinPQ<>(new NodeComparator());
         queueInit.insert(new Node(initial, 0, null));
 
         // twin board
-        Iterable<Board> previousNeighborTwin = new ArrayList<>();
         MinPQ<Node> queueTwin = new MinPQ<>(new NodeComparator());
         queueTwin.insert(new Node(initial.twin(), 0, null));
 
@@ -103,11 +92,9 @@ public class Solver {
             Iterable<Board> neighbors = node.board.neighbors();
 
             for (Board board : neighbors) {
-                if (inPreviousNeighbor(previousNeighborInit, board)) continue;
+                if (node.prev != null && board.equals(node.prev.board)) continue;
                 queueInit.insert(new Node(board, node.moves + 1, node));
             }
-
-            previousNeighborInit = neighbors;
 
             // Process twin board
             node = queueTwin.delMin();
@@ -119,11 +106,9 @@ public class Solver {
             neighbors = node.board.neighbors();
 
             for (Board board : neighbors) {
-                if (inPreviousNeighbor(previousNeighborTwin, board)) continue;
+                if (node.prev != null && board.equals(node.prev.board)) continue;
                 queueTwin.insert(new Node(board, node.moves + 1, node));
             }
-
-            previousNeighborTwin = neighbors;
         }
     }
 
