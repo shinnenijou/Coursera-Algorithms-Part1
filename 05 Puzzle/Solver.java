@@ -45,13 +45,20 @@ public class Solver {
 
     private void tryToSolve(Board initial) {
         goalNode = null;
-        ArrayList<Board> searchedBoards = new ArrayList<>();
 
-        MinPQ<Node> pq = new MinPQ<>(new ManhattanComparator());
-        pq.insert(new Node(initial, 0, null));
+        // init board
+        ArrayList<Board> searchedBoardsInit = new ArrayList<>();
+        MinPQ<Node> queueInit = new MinPQ<>(new ManhattanComparator());
+        queueInit.insert(new Node(initial, 0, null));
 
-        while (!pq.isEmpty()) {
-            Node node = pq.delMin();
+        // twin board
+        ArrayList<Board> searchedBoardsTwin = new ArrayList<>();
+        MinPQ<Node> queueTwin = new MinPQ<>(new ManhattanComparator());
+        queueTwin.insert(new Node(initial.twin(), 0, null));
+
+        while (!queueInit.isEmpty() && !queueTwin.isEmpty()) {
+            // Process Initial Board
+            Node node = queueInit.delMin();
 
             if (node.board.isGoal()) {
                 goalNode = node;
@@ -59,12 +66,27 @@ public class Solver {
             }
 
             for (Board board : node.board.neighbors()) {
-                if (!searchedBoards.contains(board)) {
-                    pq.insert(new Node(board, node.moves + 1, node));
+                if (!searchedBoardsInit.contains(board)) {
+                    queueInit.insert(new Node(board, node.moves + 1, node));
                 }
             }
 
-            searchedBoards.add(node.board);
+            searchedBoardsInit.add(node.board);
+
+            // Process twin board
+            node = queueTwin.delMin();
+
+            if (node.board.isGoal()) {
+                break;
+            }
+
+            for (Board board : node.board.neighbors()) {
+                if (!searchedBoardsTwin.contains(board)) {
+                    queueTwin.insert(new Node(board, node.moves + 1, node));
+                }
+            }
+
+            searchedBoardsTwin.add(node.board);
         }
     }
 
@@ -92,7 +114,7 @@ public class Solver {
 
         ArrayList<Board> solution = new ArrayList<>();
 
-        for (Node node = goalNode; node.prev != null; node = node.prev) {
+        for (Node node = goalNode; node != null; node = node.prev) {
             solution.add(node.board);
         }
 
