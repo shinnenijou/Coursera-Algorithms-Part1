@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/02 Percolation" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/03 Stacks and Queues" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/04 Collinear" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/05 Puzzle" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
