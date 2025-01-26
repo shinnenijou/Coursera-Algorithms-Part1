@@ -84,14 +84,12 @@ public class Solver {
             // Process Initial Board
             Node node = queueInit.delMin();
 
-            if (node.board.isGoal()) {
+            if (node.distance - node.moves == 0) {
                 goalNode = node;
                 break;
             }
 
-            Iterable<Board> neighbors = node.board.neighbors();
-
-            for (Board board : neighbors) {
+            for (Board board : node.board.neighbors()) {
                 if (node.prev != null && board.equals(node.prev.board)) continue;
                 queueInit.insert(new Node(board, node.moves + 1, node));
             }
@@ -99,13 +97,11 @@ public class Solver {
             // Process twin board
             node = queueTwin.delMin();
 
-            if (node.board.isGoal()) {
+            if (node.distance - node.moves == 0) {
                 break;
             }
 
-            neighbors = node.board.neighbors();
-
-            for (Board board : neighbors) {
+            for (Board board : node.board.neighbors()) {
                 if (node.prev != null && board.equals(node.prev.board)) continue;
                 queueTwin.insert(new Node(board, node.moves + 1, node));
             }

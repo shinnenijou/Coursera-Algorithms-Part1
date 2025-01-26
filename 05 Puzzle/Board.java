@@ -197,7 +197,6 @@ public final class Board {
         Board initial = new Board(tiles);
         StdOut.println(initial);
         StdOut.println("Dimension: " + initial.dimension());
-        StdOut.println("Hamming: " + initial.hamming());
         StdOut.println("Manhattan: " + initial.manhattan());
         StdOut.println("IsGoal: " + initial.isGoal());
         StdOut.println("Equals to self: " + initial.equals(initial));
