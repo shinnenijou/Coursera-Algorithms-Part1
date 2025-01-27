@@ -35,6 +35,10 @@ public class KdTree {
                 && point.y() <= rect.ymax();
     }
 
+    private static int count(Node node){
+        return node == null ? 0 : node.count;
+    }
+
     private static class Node {
         public final Point2D point;
         public boolean direction;
@@ -86,7 +90,7 @@ public class KdTree {
         if (comp > 0) root.left = insert(root.left, point, depth + 1);
         else root.right = insert(root.right, point, depth + 1);
 
-        root.count++;
+        root.count = count(root.left) + count(root.right) + 1;
 
         return root;
     }
